@@ -6,10 +6,6 @@
 
 #define I2C_MASTER_H_
 
-#include <msp430.h>
-#include <stdint.h>
-
-
 // Device addresses, right justified
 #define 	MAXIM_SLV_ADDR			0x4A
 
@@ -22,11 +18,19 @@
 #define 	LOW_THRESH_REG			0x06
 #define 	THRESH_TIMER_REG		0x07
 
+#define		THRESH_FULL_LUX			0xFF
+#define		THRESH_40_LUX			0x37
+#define		THRESH_30_LUX			0x35
+#define		THRESH_20_LUX			0x27
+#define		THRESH_10_LUX			0x17
+#define		THRESH_5_LUX			0x07
+#define		THRESH_1_44_LUX			0x02
+#define		THRESH_0_72_LUX			0x01
+#define		THRESH_0_LUX			0x00
 
-// I have named just dummy function, use the functions in .c file
-void I2CInit( void );
-uint16_t I2CWrite( uint8_t , uint8_t * , uint16_t );
-uint16_t I2CRead( uint8_t , uint8_t * , uint16_t );
-
+void I2C_Init( void );
+uint16_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshhold);
+double I2C_Maxim44009_GetLux(void);
+uint8_t I2C_Maxim44009_GetLuxHighByte(void);
 
 #endif /* I2C_MASTER_H_ */

@@ -2,37 +2,134 @@
  * I2CMaster.c
  */
 
-#define I2CMaster
-
-#ifdef I2CMaster
+#include <msp430.h>
+#include <stdint.h>
 
 #include "I2CMaster.h"
 
-volatile uint16_t     I2CNumBytes;
-volatile uint16_t    Ack;
-volatile uint8_t    *I2CRxBuffer, *I2CTxBuffer;
+static volatile uint16_t I2CNumBytes;
+static volatile uint16_t Ack;
+static volatile uint8_t * I2CRxBuffer;
+static volatile uint8_t * I2CTxBuffer;
+static volatile uint16_t I2CStop;
 
-volatile uint16_t    I2CStop;
+uint16_t I2C_Write( uint8_t , uint8_t * , uint16_t );
+uint16_t I2C_Read( uint8_t , uint8_t * , uint16_t );
 
-void I2CInit( void )
+uint16_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
 {
-    P1SEL |= BIT6 + BIT7;                    // Assign I2C pins to USCI_B0
-    P1SEL2|= BIT6 + BIT7;
+	uint8_t writeVal[2];
+	//set up to go from light to dark
+	//turn off INT to clear value
+	writeVal[0] = INT_ENABLE_REG;
+	writeVal[1] = 0x00;
+	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
 
-    //P1OUT |= BIT6 + BIT7;                    // We can enable internal pull-ups
-    //P1REN |= BIT6 + BIT7;
+	writeVal[0] = LOW_THRESH_REG;
+	writeVal[1] = lowThreshhold;
+	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
 
+	writeVal[0] = HIGH_THRESH_REG;
+	writeVal[1] = highThreshold;
+	if (! I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
+
+	writeVal[0] = THRESH_TIMER_REG;
+	writeVal[1] = 0x05;
+	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
+
+	writeVal[0] = INT_ENABLE_REG;
+	writeVal[1] = 0x01;
+	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
+
+	return 1;
+
+}
+
+double I2C_Maxim44009_GetLux(void)
+{
+	uint8_t high;
+	uint8_t low;
+
+	uint8_t writeVal[2];
+	uint16_t retVal;
+	uint8_t val;
+
+	//__enable_interrupt();
+
+
+	//read from MAXIM CHIP
+	writeVal[0] = INT_STATUS_REG;
+	//retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
+	//retVal = I2C_Read(MAXIM_SLV_ADDR, &val, 1);
+
+	//read lux value
+	writeVal[0] = LUX_HIGH_REG;
+	retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
+	retVal = I2C_Read(MAXIM_SLV_ADDR, &high, 1);
+
+	writeVal[0] = LUX_LOW_REG;
+	retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
+	retVal = I2C_Read(MAXIM_SLV_ADDR, &low, 1);
+
+	volatile uint8_t e = (high >> 4) & 0x0F;
+
+	volatile uint16_t lux = 1;
+	while(e>0)
+	{
+	  lux *= 2;
+	  e--;
+	}
+	volatile uint8_t m = high & 0x0F;
+	volatile double lowLux = lux * m * 0.72;
+
+
+	m = m << 4;
+	m = m | (0x0F & low);
+
+	volatile double highLux = lux * m * 0.045;
+
+	return highLux;
+}
+
+uint8_t I2C_Maxim44009_GetLuxHighByte(void)
+{
+	uint8_t high;
+	uint8_t reg = LUX_HIGH_REG;
+	//read lux value
+	I2C_Write(MAXIM_SLV_ADDR, &reg, 1);
+	I2C_Read(MAXIM_SLV_ADDR, &high, 1);
+
+	return high;
+}
+
+void I2C_Init( void )
+{
     UCB0CTL1 |= UCSWRST;                    // Enable SW reset
     UCB0CTL0 = UCMST + UCMODE_3 + UCSYNC;    // 7-bit addressing, single-master environment, I2C Master, synchronous mode
     UCB0CTL1 = UCSSEL_2 + UCSWRST;            // Use SMCLK, keep SW reset
-    UCB0BR0 = 10;                    // fSCL = SMCLK/UCB0BR1
+    UCB0BR0 = 80;                   		 // fSCL = SMCLK/UCB0BR1
     UCB0BR1 = 0;
     UCB0I2CIE = UCNACKIE;                    // Enable not-acknowledge interrupt
     UCB0CTL1 &= ~UCSWRST;                    // Clear SW reset, resume operation
     IE2 |= UCB0TXIE + UCB0RXIE;                // Enable TX&RX interrupts
 }
 
-uint16_t I2CWrite( uint8_t sladdr , uint8_t *data , uint16_t n )
+uint16_t I2C_Write( uint8_t sladdr , uint8_t *data , uint16_t n )
 {
     //
     Ack = 1;                            // Return value
@@ -41,15 +138,19 @@ uint16_t I2CWrite( uint8_t sladdr , uint8_t *data , uint16_t n )
     I2CNumBytes = n;                      // Update counter
     UCB0I2CSA = sladdr;                  // Slave address (Right justified, bits6-0)
     //
+    uint16_t uiInterruptState = __get_SR_register();
+    _enable_interrupts();
+    //
     UCB0CTL1 |= UCTR + UCTXSTT;            // Send I2C start condition, I2C TX mode
     LPM0;                                // Enter LPM0
     //
     while( UCB0CTL1 & UCTXSTP );        // I2C stop condition sent?
     //
+    _bis_SR_register(uiInterruptState);
     return Ack;
 }
 
-uint16_t I2CRead( uint8_t sladdr , uint8_t *data , uint16_t n )
+uint16_t I2C_Read( uint8_t sladdr , uint8_t *data , uint16_t n )
 {
     //
     Ack = 1;                        // Return value
@@ -84,7 +185,7 @@ uint16_t I2CRead( uint8_t sladdr , uint8_t *data , uint16_t n )
 }
 
 #ifdef    I2C_PING
-uint16_t I2CPing( uint8_t sladdr )
+uint16_t I2C_Ping( uint8_t sladdr )
 {
     //
     UCB0I2CSA = sladdr;                      // Slave address (Right justified, bits6-0)
@@ -163,4 +264,3 @@ __interrupt void USCIAB0RX_ISR(void)
     _low_power_mode_off_on_exit( );        // Exit LPM0
 }
 
-#endif
