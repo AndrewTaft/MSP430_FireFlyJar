@@ -1,9 +1,10 @@
-eeschema (2013-07-07 BZR 4022)-stable  >> Creation date: 3/9/2014 8:14:49 PM
+eeschema (2013-07-07 BZR 4022)-stable  >> Creation date: 9/21/2014 12:12:51 PM
 #Cmp ( order = Reference )
 | BAT1       BAT         
-| C1         CAP         
-| C2         CAP         
-| C3         CAP         
+| C1         100nF       
+| C2         1uF         
+| C3         1uF         
+| C4         470pF       
 | J1         HEADER_4    
 | J2         HEADER_1    
 | J3         HEADER_1    
@@ -45,19 +46,24 @@ eeschema (2013-07-07 BZR 4022)-stable  >> Creation date: 3/9/2014 8:14:49 PM
 | R17        RESISTOR    
 | R18        RESISTOR    
 | R19        RESISTOR    
-| R20        RESISTOR    
-| R21        RESISTOR    
+| R20        47K         
+| R30        10K         
+| R31        10K         
+| R32        10K         
 | SW1        SW_SPDT     
 | U1         MSP430G2553IPW28
 | U2         MAXIM_MAX44009
-| X1         CRYSTAL     
+| VDET1      VDETECTOR_3PINS-SOT-223
+| VREG1      VREG_5PINS-SOT-23-5
+| X1         32K         
 #End Cmp
 
 #Cmp ( order = Value )
 | BAT          BAT1      
-| CAP          C1        
-| CAP          C2        
-| CAP          C3        
+| 470pF        C4        
+| 100nF        C1        
+| 1uF          C2        
+| 1uF          C3        
 | HEADER_4     J1        
 | HEADER_1     J2        
 | HEADER_1     J3        
@@ -80,6 +86,10 @@ eeschema (2013-07-07 BZR 4022)-stable  >> Creation date: 3/9/2014 8:14:49 PM
 | LED          LD17      
 | LED          LD18      
 | LED          LD19      
+| 10K          R30       
+| 10K          R31       
+| 10K          R32       
+| 47K          R20       
 | RESISTOR     R1        
 | RESISTOR     R2        
 | RESISTOR     R3        
@@ -99,12 +109,12 @@ eeschema (2013-07-07 BZR 4022)-stable  >> Creation date: 3/9/2014 8:14:49 PM
 | RESISTOR     R17       
 | RESISTOR     R18       
 | RESISTOR     R19       
-| RESISTOR     R20       
-| RESISTOR     R21       
 | SW_SPDT      SW1       
 | MSP430G2553IPW28 U1        
 | MAXIM_MAX44009 U2        
-| CRYSTAL      X1        
+| VDETECTOR_3PINS-SOT-223 VDET1     
+| VREG_5PINS-SOT-23-5 VREG1     
+| 32K          X1        
 #End Cmp
 
 #End List

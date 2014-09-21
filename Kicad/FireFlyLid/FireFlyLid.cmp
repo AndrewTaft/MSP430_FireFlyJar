@@ -1,10 +1,10 @@
-Cmp-Mod V01 Created by CvPcb (2013-07-07 BZR 4022)-stable date = 3/17/2014 4:50:22 PM
+Cmp-Mod V01 Created by CvPcb (2013-07-07 BZR 4022)-stable date = 9/21/2014 5:44:20 PM
 
 BeginCmp
 TimeStamp = /531CDEFD;
 Reference = BAT1;
 ValeurCmp = BAT;
-IdModule  = MPD_BU2450SM;
+IdModule  = dp_devices-R1206;
 EndCmp
 
 BeginCmp
@@ -18,6 +18,20 @@ BeginCmp
 TimeStamp = /53274DA8;
 Reference = C2;
 ValeurCmp = 1uF;
+IdModule  = dp_devices-C805;
+EndCmp
+
+BeginCmp
+TimeStamp = /541EE195;
+Reference = C3;
+ValeurCmp = 1uF;
+IdModule  = dp_devices-C805;
+EndCmp
+
+BeginCmp
+TimeStamp = /541EE183;
+Reference = C4;
+ValeurCmp = 470pF;
 IdModule  = dp_devices-C805;
 EndCmp
 
@@ -355,6 +369,20 @@ TimeStamp = /531CEE0F;
 Reference = U2;
 ValeurCmp = MAXIM_MAX44009;
 IdModule  = MAX44009;
+EndCmp
+
+BeginCmp
+TimeStamp = /541EE0CE;
+Reference = VDET1;
+ValeurCmp = VDETECTOR_3PINS-SOT-223;
+IdModule  = dp_devices-SOT-23;
+EndCmp
+
+BeginCmp
+TimeStamp = /541ED831;
+Reference = VREG1;
+ValeurCmp = VREG_5PINS-SOT-23-5;
+IdModule  = dp_devices-SOT-23-5;
 EndCmp
 
 BeginCmp
