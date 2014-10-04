@@ -15,9 +15,9 @@ int adcGenRand8(void);
 void System_InitializeHW(void)
 {
 	//set clock
-	DCOCTL = 0;                           // Run at 8 MHz
-	BCSCTL1 = CALBC1_8MHZ;                //
-	DCOCTL = CALDCO_8MHZ;                 //
+	DCOCTL = 0;                           // Run at 16 MHz
+	BCSCTL1 = CALBC1_16MHZ;                //
+	DCOCTL = CALDCO_16MHZ;                 //
 	BCSCTL3 |= LFXT1S1;					  // Set ACLK = Internal Osc
 
 	//set up all the ports
