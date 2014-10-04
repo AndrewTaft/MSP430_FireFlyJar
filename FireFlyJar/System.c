@@ -24,28 +24,19 @@ void System_InitializeHW(void)
 	P1OUT = 0x00;
 	P1SEL = (BIT6)+(BIT7);
 	P1SEL2 = (BIT6)+(BIT7);
-	P1DIR = 0xFF;	//p1.6,p1.7 will be used by I2C data and clk
+	P1DIR = 0xFF;	//p1.1 is captouch 1(large button). p1.6,p1.7 is used by I2C data and clk
 
-//	//tmp changes to see clock rates
-//	//set p1.0 to aclk
-//	P1DIR |= (BIT0);
-//	P1SEL |= (BIT0);
-//	//set p1.4 for smclk
-//	P1DIR |= (BIT4);
-//	P1SEL |= (BIT4);
-
-
-	//p2.5 as cap touch (enabled by Lib), p2.7 as in for I2C Interrupt
+	//p2.3 as cap touch (enabled by Lib)
 	P2OUT = 0x00;
 	P2SEL = 0x00;
 	P2SEL2 = 0x00;
-	P2DIR = 0x7F;
+	P2DIR = 0xFF;
 
-	//p3.3 as cap touch (enabled by Lib)
+	//p3.7 as in for I2C Interrupt
 	P3OUT = 0x00;
 	P3SEL = 0x00;
 	P3SEL2 = 0x00;
-	P3DIR = 0xFB;
+	P3DIR = 0x7F;
 
 
 	//initialize random num gen

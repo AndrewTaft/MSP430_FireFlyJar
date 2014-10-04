@@ -16,13 +16,27 @@
 
 PFN_STATE_VOID_VOID g_pfnCurrentState;
 
+uint8_t mPlayMode = 0;
+
+
 void InitializeHW( void );
 void InitializeApps( void );
 
 void State_Default(void);
 
-
 void LargeButtonPressed(void);
+void OnPlaySongExit(void);
+void OnDisableButtons(void);
+void OnEnableButtons(void);
+
+static const SPlaySongInfo mMain_tPlaySongInfo =
+{
+	&g_pfnCurrentState,
+	OnPlaySongExit,
+	OnDisableButtons,
+	OnEnableButtons
+};
+
 
 
 void main(void) {
@@ -41,7 +55,8 @@ void main(void) {
 
 	__enable_interrupt();
 
-	PlaySong_Entry(&g_pfnCurrentState);
+	PlaySong_Entry(&mMain_tPlaySongInfo);
+	PlaySong_SetPlayMode(mPlayMode);
 
 	CapTouchLib_RegisterLargeButtonSink(LargeButtonPressed);
 
@@ -72,13 +87,31 @@ void State_Default(void)
 
 void LargeButtonPressed(void)
 {
-	P1OUT |= BIT2;
+	mPlayMode = (mPlayMode + 1) % 3;
+	PlaySong_SetPlayMode(mPlayMode);
 }
 
+void OnPlaySongExit(void)
+{
+}
+
+void OnDisableButtons(void)
+{
+	CapTouchLib_Disable();
+}
+
+void OnEnableButtons(void)
+{
+	CapTouchLib_Enable();
+}
 
 // Watchdog Timer interrupt service routine
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
+	//uint8_t tmp = __get_SR_register_on_exit();
+	//if(!(tmp & CPUOFF))
+	//		mTimerMissed = 1;
+
 	__low_power_mode_off_on_exit();
 }

@@ -14,7 +14,9 @@
 #include "BCM.h"
 #include "I2CMaster.h"
 
-static PFN_STATE_VOID_VOID * mPlaySong_ppfnHostState;
+static SPlaySongInfo const * mPlaySong_ptMainAppInfo;
+//static PFN_STATE_VOID_VOID * mPlaySong_ppfnHostState;
+static PFN_STATE_VOID_VOID  mPlaySong_ppfnPlayMode;
 
 typedef struct {
 	int16_t FlashPoint;
@@ -43,7 +45,6 @@ static uint8_t mPlaySong_auiPortLevel[3][8] = {{0,0,0,0,0,0,0,0},
 static PlaySong_FireflyMem mPlaySong_affFireflyMem[19];
 static const PlaySong_FireflyConst mPlaySong_affFireflyConst[] = {
 		{PORT1,0},
-		{PORT1,1},
 		{PORT1,2},
 		{PORT1,3},
 		{PORT1,4},
@@ -51,26 +52,36 @@ static const PlaySong_FireflyConst mPlaySong_affFireflyConst[] = {
 		{PORT2,0},
 		{PORT2,1},
 		{PORT2,2},
-		{PORT2,3},
 		{PORT2,4},
+		{PORT2,5},
 		{PORT2,6},
+		{PORT2,7},
 		{PORT3,0},
 		{PORT3,1},
 		{PORT3,2},
+		{PORT3,3},
 		{PORT3,4},
 		{PORT3,5},
 		{PORT3,6},
-		{PORT3,7},
 };
 
+//Main States
 void PlaySong_State_WaitForDark(void);
 void PlaySong_State_Playing_Synchronizing(void);
 void PlaySong_State_Playing_RandomFlashers(void);
+void PlaySong_State_Stopped(void);
 
 void PlaySong_Enter_WaitForDark(void);
 void PlaySong_Enter_Playing(void);
 
 
+//PlayMode States
+void PlaySong_PlayMode_State_Off(void);
+void PlaySong_PlayMode_State_StayOn(void);
+void PlaySong_PlayMode_State_DarkOnly(void);
+
+
+//Helpers
 void PlaySong_Synchronizing_Initialize(void);
 void PlaySong_RandomFlashers_Initialize(void);
 
@@ -87,56 +98,112 @@ void PlaySong_InitializeApps(void)
 	BCM_InitializeApp();
 }
 
-void PlaySong_Entry(PFN_STATE_VOID_VOID * ppfnHostState)
+void PlaySong_Entry(SPlaySongInfo const * ptPlaySongInfo)
 {
-	mPlaySong_ppfnHostState = ppfnHostState;
+	mPlaySong_ptMainAppInfo = ptPlaySongInfo;
+}
+
+void PlaySong_SetPlayMode(uint8_t mode)
+{
+	//change this to use enum
+	switch(mode)
+	{
+		case 0:
+			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_Off;
+			break;
+
+		case 1:
+			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_StayOn;
+			break;
+
+		case 2:
+			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_DarkOnly;
+			break;
+	}
+	mPlaySong_ppfnPlayMode();
+}
+
+
+//PlayMode States
+void PlaySong_PlayMode_State_Off(void)
+{
+	BCM_Stop();
+	*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_Stopped;
+}
+
+void PlaySong_PlayMode_State_StayOn(void)
+{
 	PlaySong_Enter_Playing();
 }
 
+void PlaySong_PlayMode_State_DarkOnly(void)
+{
+	PlaySong_Enter_WaitForDark();
+}
+
+
+//Maint States
 void PlaySong_Enter_WaitForDark(void)
 {
 	//stop the BCM
 	BCM_Stop();
 
-	//check current lux level
-	uint8_t luxHighByte = I2C_Maxim44009_GetLuxHighByte();
+	//disable the buttons
+	//mPlaySong_ptMainAppInfo->pfnCallback_ButtonDisable();
 
-	//pull this value from somewhere else next
-	if(THRESH_10_LUX > luxHighByte)
+	//check current lux level.  pull threshold value from somewhere else next
+	uint8_t curLux = 0;
+	curLux = I2C_Maxim44009_GetLuxHighByte();
+	if(THRESH_10_LUX < curLux)
 	{
-		I2C_Maxim44009_SetTreshhold(THRESH_20_LUX, THRESH_FULL_LUX);
+		I2C_Maxim44009_SetTreshhold(THRESH_10_LUX, THRESH_FULL_LUX);
 
-		//enable the p2.7 interrupts
-		P2IES |= (BIT7);
-		P2IFG &= ~(BIT7);
-		P2IE |= (BIT7);
+		//enable the p3.7 interrupts  apparently there are no port 3 interupts doing active polling in next state
+		//P3IES |= (BIT7);
+		//P3IFG &= ~(BIT7);
+		//P3IE |= (BIT7);
 
 		//transition to new state
-		*mPlaySong_ppfnHostState = PlaySong_State_WaitForDark;
+		*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_WaitForDark;
 	}
 	else
 	{
 		PlaySong_Enter_Playing();
 	}
+
+	//mPlaySong_ptMainAppInfo->pfnCallback_ButtonEnable();
 }
 
 void PlaySong_State_WaitForDark(void)
 {
-	//do nothing for now
+	//check 3.7 for low
+	if((P3IN & BIT7) == 0)
+	{
+		PlaySong_Enter_Playing();
+		return;
+	}
 }
 
+void PlaySong_State_Stopped(void)
+{
+	//do nothing
+}
 
 void PlaySong_Enter_Playing(void)
 {
-	//set the on light alert
-	//pull this value from somewhere else next
-	I2C_Maxim44009_SetTreshhold(THRESH_0_LUX, THRESH_20_LUX);
+	//mPlaySong_ptMainAppInfo->pfnCallback_ButtonDisable();
 
-	//enable the p2.7 interrupts
-	P2IES |= (BIT7);
-	P2IFG &= ~(BIT7);
-	P2IE |= (BIT7);
+	if(*mPlaySong_ppfnPlayMode == PlaySong_PlayMode_State_DarkOnly)
+	{
+		//set the on light alert
+		//pull this value from somewhere else next
+		I2C_Maxim44009_SetTreshhold(THRESH_0_LUX, THRESH_10_LUX);
 
+		//enable the p3.7 interrupts  no interupts will have to poll on each play in next step
+		//P3IES |= (BIT7);
+		//P3IFG &= ~(BIT7);
+		//P3IE |= (BIT7);
+	}
 	//init current song
 	PlaySong_RandomFlashers_Initialize();
 
@@ -144,8 +211,10 @@ void PlaySong_Enter_Playing(void)
 	BCM_EncodeTimeSliceAllPins(PORT2, mPlaySong_auiPortLevel[PORT2]);
 	BCM_EncodeTimeSliceAllPins(PORT3, mPlaySong_auiPortLevel[PORT3]);
 
+	//mPlaySong_ptMainAppInfo->pfnCallback_ButtonEnable();
+
 	//transition to new state
-	*mPlaySong_ppfnHostState = PlaySong_State_Playing_RandomFlashers;
+	*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_Playing_RandomFlashers;
 }
 
 void PlaySong_State_Playing_Synchronizing(void)
@@ -160,6 +229,13 @@ void PlaySong_Synchronizing_Initialize(void)
 
 void PlaySong_State_Playing_RandomFlashers(void)
 {
+	//check 3.7 for low
+	if((P3IN & BIT7) == 0)
+	{
+		PlaySong_Enter_WaitForDark();
+		return;
+	}
+
 	uint8_t i;
 	for(i = 0; i < 19; i++)
 	{
@@ -199,17 +275,18 @@ void PlaySong_RandomFlashers_Initialize(void)
 }
 
 
-// Port 2 interrupt service routine
-#pragma vector=PORT2_VECTOR
-__interrupt void Port_2(void)
+// Port 3 interrupt service routine   apparently there is no interupt on port 3
+/*
+#pragma vector=PORT3_VECTOR
+__interrupt void Port_3(void)
 {
 	//check if p2.7 was triggered
-	if(P2IE & BIT7)
+	if(P3IE & BIT7)
 	{
-		if(P2IFG & BIT7)
+		if(P3IFG & BIT7)
 		{
-			P2IE &= ~(BIT7);                           // P2.7 Interrupt disabled
-		    P2IFG &= ~(BIT7);                           // P2.7 IFG cleared
+			P3IE &= ~(BIT7);                           // P3.7 Interrupt disabled
+		    P3IFG &= ~(BIT7);                           // P3.7 IFG cleared
 		    if(*mPlaySong_ppfnHostState == PlaySong_State_WaitForDark)
 		    {
 		    	PlaySong_Enter_Playing();
@@ -228,3 +305,4 @@ __interrupt void Port_2(void)
 		}
 	}
 }
+*/

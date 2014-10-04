@@ -8,15 +8,15 @@
 #include "I2CMaster.h"
 
 static volatile uint16_t I2CNumBytes;
-static volatile uint16_t Ack;
+static volatile uint8_t Ack;
 static volatile uint8_t * I2CRxBuffer;
 static volatile uint8_t * I2CTxBuffer;
 static volatile uint16_t I2CStop;
 
-uint16_t I2C_Write( uint8_t , uint8_t * , uint16_t );
-uint16_t I2C_Read( uint8_t , uint8_t * , uint16_t );
+uint8_t I2C_Write( uint8_t , uint8_t * , uint16_t );
+uint8_t I2C_Read( uint8_t , uint8_t * , uint16_t );
 
-uint16_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
+uint8_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
 {
 	uint8_t writeVal[2];
 	//set up to go from light to dark
@@ -66,8 +66,7 @@ double I2C_Maxim44009_GetLux(void)
 	uint8_t low;
 
 	uint8_t writeVal[2];
-	uint16_t retVal;
-	uint8_t val;
+	uint8_t retVal;
 
 	//__enable_interrupt();
 
@@ -129,7 +128,7 @@ void I2C_Init( void )
     IE2 |= UCB0TXIE + UCB0RXIE;                // Enable TX&RX interrupts
 }
 
-uint16_t I2C_Write( uint8_t sladdr , uint8_t *data , uint16_t n )
+uint8_t I2C_Write( uint8_t sladdr , uint8_t *data , uint16_t n )
 {
     //
     Ack = 1;                            // Return value
@@ -138,19 +137,19 @@ uint16_t I2C_Write( uint8_t sladdr , uint8_t *data , uint16_t n )
     I2CNumBytes = n;                      // Update counter
     UCB0I2CSA = sladdr;                  // Slave address (Right justified, bits6-0)
     //
-    uint16_t uiInterruptState = __get_SR_register();
-    _enable_interrupts();
+    //uint16_t uiInterruptState = __get_SR_register();
+    //_enable_interrupts();
     //
     UCB0CTL1 |= UCTR + UCTXSTT;            // Send I2C start condition, I2C TX mode
     LPM0;                                // Enter LPM0
     //
     while( UCB0CTL1 & UCTXSTP );        // I2C stop condition sent?
     //
-    _bis_SR_register(uiInterruptState);
+    //_bis_SR_register(uiInterruptState);
     return Ack;
 }
 
-uint16_t I2C_Read( uint8_t sladdr , uint8_t *data , uint16_t n )
+uint8_t I2C_Read( uint8_t sladdr , uint8_t *data , uint16_t n )
 {
     //
     Ack = 1;                        // Return value
@@ -164,12 +163,12 @@ uint16_t I2C_Read( uint8_t sladdr , uint8_t *data , uint16_t n )
     {
         I2CNumBytes = 0;                // Update counter
         //
-        __disable_interrupt();
+        //__disable_interrupt();
         UCB0CTL1 |= UCTXSTT;            // Send I2C start condition, I2C RX mode
         while( UCB0CTL1 & UCTXSTT );    // I2C start condition sent?
         UCB0CTL1 |= UCTXSTP;            // Send I2C stop condition
         I2CStop = 1;                    // I2C stop condition sent
-      __enable_interrupt();
+      //__enable_interrupt();
     }
     else if( n > 1 )
     {
