@@ -1,0 +1,1 @@
+"./BinaryCodeModulation/bytePivot.obj" "./BinaryCodeModulation/BCM.obj" "./CapTouch/structure.obj" "./CapTouch/CapTouchLib.obj" "./CapTouch/CTS_Layer.obj" "./CapTouch/CTS_HAL.obj" "./I2C/I2CMaster.obj" "./main.obj" "./System.obj" "./PlaySong.obj" -l"libc.a" "../lnk_msp430g2553.cmd" 
