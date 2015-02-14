@@ -6,8 +6,10 @@
 
 #define I2C_MASTER_H_
 
+#ifdef MAXIM
 // Device addresses, right justified
-#define 	MAXIM_SLV_ADDR			0x4A
+#define 	DEVICE_SLV_ADDR			0x4A
+
 
 #define 	INT_STATUS_REG			0x00
 #define 	INT_ENABLE_REG			0x01
@@ -34,9 +36,25 @@
 #define		THRESH_0_72_LUX			0x01
 #define		THRESH_0_LUX			0x00
 
+#endif
+
+#ifdef INTERSIL
+#define		DEVICE_SLV_ADDR			0x44 //or 0x88
+
+#define 	COMMANDI_REG			0x00
+#define 	COMMANDII_REG			0x01
+#define 	DATA_LSB_REG			0x02
+#define		DATA_MSB_REG	 		0x03
+#define 	LOW_THRESH_LSB_REG		0x04
+#define 	LOW_THRESH_MSB_REG		0x05
+#define 	HIGH_THRESH_LSB_REG		0x04
+#define 	HIGH_THRESH_MSB_REG		0x05
+
+#endif
+
 void I2C_Init( void );
-uint8_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshhold);
-double I2C_Maxim44009_GetLux(void);
-uint8_t I2C_Maxim44009_GetLuxHighByte(void);
+uint8_t I2C_Device_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshhold);
+double I2C_Device_GetLux(void);
+uint8_t I2C_Device_GetLuxHighByte(void);
 
 #endif /* I2C_MASTER_H_ */

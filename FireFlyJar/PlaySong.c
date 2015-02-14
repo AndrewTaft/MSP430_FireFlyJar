@@ -109,15 +109,15 @@ void PlaySong_SetPlayMode(uint8_t mode)
 	switch(mode)
 	{
 		case 0:
-			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_Off;
-			break;
-
-		case 1:
 			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_StayOn;
 			break;
 
-		case 2:
+		case 1:
 			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_DarkOnly;
+			break;
+
+		case 2:
+			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_Off;
 			break;
 	}
 	mPlaySong_ppfnPlayMode();
@@ -153,10 +153,10 @@ void PlaySong_Enter_WaitForDark(void)
 
 	//check current lux level.  pull threshold value from somewhere else next
 	uint8_t curLux = 0;
-	curLux = I2C_Maxim44009_GetLuxHighByte();
+	curLux = I2C_Device_GetLuxHighByte();
 	if(THRESH_10_LUX < curLux)
 	{
-		I2C_Maxim44009_SetTreshhold(THRESH_10_LUX, THRESH_FULL_LUX);
+		I2C_Device_SetTreshhold(THRESH_10_LUX, THRESH_FULL_LUX);
 
 		//enable the p3.7 interrupts  apparently there are no port 3 interupts doing active polling in next state
 		//P3IES |= (BIT7);
@@ -197,7 +197,7 @@ void PlaySong_Enter_Playing(void)
 	{
 		//set the on light alert
 		//pull this value from somewhere else next
-		I2C_Maxim44009_SetTreshhold(THRESH_0_LUX, THRESH_10_LUX);
+		I2C_Device_SetTreshhold(THRESH_0_LUX, THRESH_10_LUX);
 
 		//enable the p3.7 interrupts  no interupts will have to poll on each play in next step
 		//P3IES |= (BIT7);

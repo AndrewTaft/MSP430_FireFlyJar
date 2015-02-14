@@ -5,6 +5,8 @@
 #include <msp430.h>
 #include <stdint.h>
 
+#define INTERSIL
+
 #include "I2CMaster.h"
 
 static volatile uint16_t I2CNumBytes;
@@ -16,42 +18,44 @@ static volatile uint16_t I2CStop;
 uint8_t I2C_Write( uint8_t , uint8_t * , uint16_t );
 uint8_t I2C_Read( uint8_t , uint8_t * , uint16_t );
 
-uint8_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
+#ifdef MAXIM
+
+uint8_t I2C_Device_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
 {
 	uint8_t writeVal[2];
 	//set up to go from light to dark
 	//turn off INT to clear value
 	writeVal[0] = INT_ENABLE_REG;
 	writeVal[1] = 0x00;
-	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	if (!I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
 	{
 		return 0;
 	}
 
 	writeVal[0] = LOW_THRESH_REG;
 	writeVal[1] = lowThreshhold;
-	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	if (!I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
 	{
 		return 0;
 	}
 
 	writeVal[0] = HIGH_THRESH_REG;
 	writeVal[1] = highThreshold;
-	if (! I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	if (! I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
 	{
 		return 0;
 	}
 
 	writeVal[0] = THRESH_TIMER_REG;
 	writeVal[1] = 0x05;
-	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	if (!I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
 	{
 		return 0;
 	}
 
 	writeVal[0] = INT_ENABLE_REG;
 	writeVal[1] = 0x01;
-	if (!I2C_Write(MAXIM_SLV_ADDR, writeVal, 2))
+	if (!I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
 	{
 		return 0;
 	}
@@ -60,7 +64,7 @@ uint8_t I2C_Maxim44009_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold
 
 }
 
-double I2C_Maxim44009_GetLux(void)
+double I2C_Device_GetLux(void)
 {
 	uint8_t high;
 	uint8_t low;
@@ -73,17 +77,17 @@ double I2C_Maxim44009_GetLux(void)
 
 	//read from MAXIM CHIP
 	writeVal[0] = INT_STATUS_REG;
-	//retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
-	//retVal = I2C_Read(MAXIM_SLV_ADDR, &val, 1);
+	//retVal = I2C_Write(DEVICE_SLV_ADDR, writeVal, 1);
+	//retVal = I2C_Read(DEVICE_SLV_ADDR, &val, 1);
 
 	//read lux value
 	writeVal[0] = LUX_HIGH_REG;
-	retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
-	retVal = I2C_Read(MAXIM_SLV_ADDR, &high, 1);
+	retVal = I2C_Write(DEVICE_SLV_ADDR, writeVal, 1);
+	retVal = I2C_Read(DEVICE_SLV_ADDR, &high, 1);
 
 	writeVal[0] = LUX_LOW_REG;
-	retVal = I2C_Write(MAXIM_SLV_ADDR, writeVal, 1);
-	retVal = I2C_Read(MAXIM_SLV_ADDR, &low, 1);
+	retVal = I2C_Write(DEVICE_SLV_ADDR, writeVal, 1);
+	retVal = I2C_Read(DEVICE_SLV_ADDR, &low, 1);
 
 	volatile uint8_t e = (high >> 4) & 0x0F;
 
@@ -105,16 +109,39 @@ double I2C_Maxim44009_GetLux(void)
 	return highLux;
 }
 
-uint8_t I2C_Maxim44009_GetLuxHighByte(void)
+uint8_t I2C_Device_GetLuxHighByte(void)
 {
 	uint8_t high;
 	uint8_t reg = LUX_HIGH_REG;
 	//read lux value
-	I2C_Write(MAXIM_SLV_ADDR, &reg, 1);
-	I2C_Read(MAXIM_SLV_ADDR, &high, 1);
+	I2C_Write(DEVICE_SLV_ADDR, &reg, 1);
+	I2C_Read(DEVICE_SLV_ADDR, &high, 1);
 
 	return high;
 }
+
+#endif
+
+
+#ifdef INTERSIL
+
+uint8_t I2C_Device_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
+{
+	return 0;
+}
+
+double I2C_Device_GetLux(void)
+{
+	return 0;
+}
+
+uint8_t I2C_Device_GetLuxHighByte(void)
+{
+	return 0;
+}
+
+#endif
+
 
 void I2C_Init( void )
 {
