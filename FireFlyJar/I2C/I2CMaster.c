@@ -5,8 +5,6 @@
 #include <msp430.h>
 #include <stdint.h>
 
-#define INTERSIL
-
 #include "I2CMaster.h"
 
 static volatile uint16_t I2CNumBytes;
@@ -132,6 +130,21 @@ uint8_t I2C_Device_SetTreshhold(uint8_t lowThreshhold, uint8_t highThreshold)
 
 double I2C_Device_GetLux(void)
 {
+	uint8_t writeVal[2];
+	//set up to go from light to dark
+	//turn off INT to clear value
+	writeVal[0] = COMMANDI_REG;
+	writeVal[1] = COMMAND_ALS_CONTINUOUS;
+	if (!I2C_Write(DEVICE_SLV_ADDR, writeVal, 2))
+	{
+		return 0;
+	}
+
+	uint8_t reg = DATA_LSB_REG;
+	//read lux value
+	I2C_Write(DEVICE_SLV_ADDR, &reg, 1);
+	I2C_Read(DEVICE_SLV_ADDR, &writeVal, 2);
+
 	return 0;
 }
 

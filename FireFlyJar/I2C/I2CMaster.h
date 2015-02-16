@@ -6,6 +6,8 @@
 
 #define I2C_MASTER_H_
 
+#define INTERSIL
+
 #ifdef MAXIM
 // Device addresses, right justified
 #define 	DEVICE_SLV_ADDR			0x4A
@@ -49,6 +51,13 @@
 #define 	LOW_THRESH_MSB_REG		0x05
 #define 	HIGH_THRESH_LSB_REG		0x04
 #define 	HIGH_THRESH_MSB_REG		0x05
+
+#define		COMMAND_ALS_CONTINUOUS	0xA0
+#define		COMMAND_POW_DWN			0x00
+
+#define		THRESH_FULL_LUX			0xFF
+#define		THRESH_10_LUX			0x17
+#define		THRESH_0_LUX			0x00
 
 #endif
 

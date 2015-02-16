@@ -21,7 +21,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "21 sep 2014"
+Date "15 feb 2015"
 Rev ""
 Comp ""
 Comment1 ""
@@ -943,4 +943,6 @@ Wire Wire Line
 	2150 6000 2350 6000
 Wire Wire Line
 	2350 6000 2350 6100
+Text Notes 8250 3050 0    60   ~ 0
+Change P3.7 for interrupt to use P1 or P2
 $EndSCHEMATC

@@ -18,7 +18,8 @@ typedef struct StructButtonInfo
 {
 	PFN_STATE_VOID_VOID pfnCurrentState;
 	struct StructButtonInfo* tNextButton;
-	PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink;
+	PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnPressEventSink;
+	PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnReleaseEventSink;
 	uint16_t uiBaseSenseLevel;
 	uint8_t *uiPortSelAddress; //can be removed if both are on the same port
 	uint8_t *uiPortSel2Address; //can be removed if both are on the same port
@@ -73,11 +74,15 @@ void CapTouchLib_InitializeApp( void )
 	mCapTouchLib_tLargeButton.uiPortSelAddress = (uint8_t *)&P1SEL;
 	mCapTouchLib_tLargeButton.uiPortSel2Address = (uint8_t *)&P1SEL2;
 	mCapTouchLib_tLargeButton.uiPin = BIT1; //pin 1
+	mCapTouchLib_tLargeButton.pfnPressEventSink = CapTouchLib_DefaultEventSink;
+	mCapTouchLib_tLargeButton.pfnReleaseEventSink = CapTouchLib_DefaultEventSink;
 	mCapTouchLib_tLargeButton.tNextButton = &mCapTouchLib_tLargeButton;
 
 	mCapTouchLib_tSmallButton.uiPortSelAddress = (uint8_t *)&P2SEL;
 	mCapTouchLib_tSmallButton.uiPortSel2Address = (uint8_t *)&P2SEL2;
 	mCapTouchLib_tSmallButton.uiPin = BIT3; //pin 3
+	mCapTouchLib_tSmallButton.pfnPressEventSink = CapTouchLib_DefaultEventSink;
+	mCapTouchLib_tSmallButton.pfnReleaseEventSink = CapTouchLib_DefaultEventSink;
 	mCapTouchLib_tSmallButton.tNextButton = &mCapTouchLib_tLargeButton;
 
 	mCapTouchLib_ptCurrentButton = &mCapTouchLib_tLargeButton;
@@ -89,27 +94,51 @@ void CapTouchLib_Tick(void)
 	mCapTouchLib_ptCurrentButton->pfnCurrentState();
 }
 
-void CapTouchLib_RegisterLargeButtonSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
+void CapTouchLib_RegisterLargeButtonPressSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
 {
 	if(0 == pfnEventSink)
 	{
-		mCapTouchLib_tLargeButton.pfnEventSink = CapTouchLib_DefaultEventSink;
+		mCapTouchLib_tLargeButton.pfnPressEventSink = CapTouchLib_DefaultEventSink;
 	}
 	else
 	{
-		mCapTouchLib_tLargeButton.pfnEventSink = pfnEventSink;
+		mCapTouchLib_tLargeButton.pfnPressEventSink = pfnEventSink;
 	}
 }
 
-void CapTouchLib_RegisterSmallButtonSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
+void CapTouchLib_RegisterLargeButtonReleaseSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
 {
 	if(0 == pfnEventSink)
 	{
-		mCapTouchLib_tSmallButton.pfnEventSink = CapTouchLib_DefaultEventSink;
+		mCapTouchLib_tLargeButton.pfnReleaseEventSink = CapTouchLib_DefaultEventSink;
 	}
 	else
 	{
-		mCapTouchLib_tSmallButton.pfnEventSink = pfnEventSink;
+		mCapTouchLib_tLargeButton.pfnReleaseEventSink = pfnEventSink;
+	}
+}
+
+void CapTouchLib_RegisterSmallButtonPressSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
+{
+	if(0 == pfnEventSink)
+	{
+		mCapTouchLib_tSmallButton.pfnPressEventSink = CapTouchLib_DefaultEventSink;
+	}
+	else
+	{
+		mCapTouchLib_tSmallButton.pfnPressEventSink = pfnEventSink;
+	}
+}
+
+void CapTouchLib_RegisterSmallButtonReleaseSink(PFN_CAP_TOUCH_LIB_EVENT_SINK_VOID_VOID pfnEventSink)
+{
+	if(0 == pfnEventSink)
+	{
+		mCapTouchLib_tSmallButton.pfnReleaseEventSink = CapTouchLib_DefaultEventSink;
+	}
+	else
+	{
+		mCapTouchLib_tSmallButton.pfnReleaseEventSink = pfnEventSink;
 	}
 }
 
@@ -225,7 +254,7 @@ void CapTouchLib_State_PressDelay(void)
 	if (mCapTouchLib_uiDeltaCount > CAPTOUCHLIB_KEY_COMPARE)       // Determine if each key is pressed per a preset threshold
 	{
 		//key pressed call event sink
-		mCapTouchLib_ptCurrentButton->pfnEventSink();
+		mCapTouchLib_ptCurrentButton->pfnPressEventSink();
 		CapTouchLib_EnterWaitForRelease();
 	}
 	else
@@ -303,7 +332,8 @@ void CapTouchLib_State_ReleaseDelay(void)
 
 	if (mCapTouchLib_uiDeltaCount > CAPTOUCHLIB_KEY_COMPARE)       // Determine if each key is pressed per a preset threshold
 	{
-		//mCapTouchLib_ptCurrentButton->pfnEventSink();  //dont call the sink on release for now
+		//key released call event sink
+		mCapTouchLib_ptCurrentButton->pfnReleaseEventSink();
 		CapTouchLib_EnterWaitForPress();
 	}
 	else

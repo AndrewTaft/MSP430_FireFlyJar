@@ -10,13 +10,13 @@
 #include <stdlib.h>
 
 #include "MyTypes.h"
-#include "PlaySong.h"
+#include "SongRandom.h"
 #include "BCM.h"
 #include "I2CMaster.h"
 
 static SPlaySongInfo const * mPlaySong_ptMainAppInfo;
 //static PFN_STATE_VOID_VOID * mPlaySong_ppfnHostState;
-static PFN_STATE_VOID_VOID  mPlaySong_ppfnPlayMode;
+//static PFN_STATE_VOID_VOID  mPlaySong_ppfnPlayMode;
 
 typedef struct {
 	int16_t FlashPoint;
@@ -76,9 +76,9 @@ void PlaySong_Enter_Playing(void);
 
 
 //PlayMode States
-void PlaySong_PlayMode_State_Off(void);
-void PlaySong_PlayMode_State_StayOn(void);
-void PlaySong_PlayMode_State_DarkOnly(void);
+//void PlaySong_PlayMode_State_Off(void);
+//void PlaySong_PlayMode_State_StayOn(void);
+//void PlaySong_PlayMode_State_DarkOnly(void);
 
 
 //Helpers
@@ -101,48 +101,62 @@ void PlaySong_InitializeApps(void)
 void PlaySong_Entry(SPlaySongInfo const * ptPlaySongInfo)
 {
 	mPlaySong_ptMainAppInfo = ptPlaySongInfo;
+	*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_Stopped;
 }
 
-void PlaySong_SetPlayMode(uint8_t mode)
-{
-	//change this to use enum
-	switch(mode)
-	{
-		case 0:
-			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_StayOn;
-			break;
-
-		case 1:
-			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_DarkOnly;
-			break;
-
-		case 2:
-			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_Off;
-			break;
-	}
-	mPlaySong_ppfnPlayMode();
-}
-
-
-//PlayMode States
-void PlaySong_PlayMode_State_Off(void)
+void PlaySong_Stop()
 {
 	BCM_Stop();
 	*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_Stopped;
 }
 
-void PlaySong_PlayMode_State_StayOn(void)
-{
-	PlaySong_Enter_Playing();
-}
+//void PlaySong_SetPlayMode(uint8_t mode)
+//{
+//	//change this to use enum
+//	switch(mode)
+//	{
+//
+//		case 0:
+//			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_Off;
+//			break;
+//
+//		case 1:
+//			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_StayOn;
+//			break;
+//
+//		case 2:
+//			mPlaySong_ppfnPlayMode = PlaySong_PlayMode_State_DarkOnly;
+//			break;
+//
+//	}
+//	mPlaySong_ppfnPlayMode();
+//}
 
-void PlaySong_PlayMode_State_DarkOnly(void)
-{
-	PlaySong_Enter_WaitForDark();
-}
+
+////PlayMode States
+//void PlaySong_PlayMode_State_Off(void)
+//{
+//	BCM_Stop();
+//	*(mPlaySong_ptMainAppInfo->ppfnHostState) = PlaySong_State_Stopped;
+//}
+
+//void PlaySong_PlayMode_State_StayOn(void)
+//{
+//	PlaySong_Enter_Playing();
+//}
+
+//void PlaySong_PlayMode_State_DarkOnly(void)
+//{
+//	PlaySong_Enter_WaitForDark();
+//}
 
 
 //Maint States
+void PlaySong_State_Stopped(void)
+{
+	//do nothing
+}
+
 void PlaySong_Enter_WaitForDark(void)
 {
 	//stop the BCM
@@ -184,26 +198,21 @@ void PlaySong_State_WaitForDark(void)
 	}
 }
 
-void PlaySong_State_Stopped(void)
-{
-	//do nothing
-}
-
 void PlaySong_Enter_Playing(void)
 {
 	//mPlaySong_ptMainAppInfo->pfnCallback_ButtonDisable();
 
-	if(*mPlaySong_ppfnPlayMode == PlaySong_PlayMode_State_DarkOnly)
-	{
-		//set the on light alert
-		//pull this value from somewhere else next
-		I2C_Device_SetTreshhold(THRESH_0_LUX, THRESH_10_LUX);
-
-		//enable the p3.7 interrupts  no interupts will have to poll on each play in next step
-		//P3IES |= (BIT7);
-		//P3IFG &= ~(BIT7);
-		//P3IE |= (BIT7);
-	}
+//	if(*mPlaySong_ppfnPlayMode == PlaySong_PlayMode_State_DarkOnly)
+//	{
+//		//set the on light alert
+//		//pull this value from somewhere else next
+//		I2C_Device_SetTreshhold(THRESH_0_LUX, THRESH_10_LUX);
+//
+//		//enable the p3.7 interrupts  no interupts will have to poll on each play in next step
+//		//P3IES |= (BIT7);
+//		//P3IFG &= ~(BIT7);
+//		//P3IE |= (BIT7);
+//	}
 	//init current song
 	PlaySong_RandomFlashers_Initialize();
 

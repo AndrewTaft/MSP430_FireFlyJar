@@ -4,22 +4,22 @@
 
 SHELL = cmd.exe
 
-CG_TOOL_ROOT := C:/ti/ccsv5/tools/compiler/msp430
+CG_TOOL_ROOT := c:/ti/ccsv6/tools/compiler/msp430_4.3.3
 
 ORDERED_OBJS += \
 $(GEN_CMDS__FLAG) \
-"./BinaryCodeModulation/bytePivot.obj" \
-"./BinaryCodeModulation/BCM.obj" \
-"./CapTouch/structure.obj" \
-"./CapTouch/CapTouchLib.obj" \
-"./CapTouch/CTS_Layer.obj" \
-"./CapTouch/CTS_HAL.obj" \
-"./I2C/I2CMaster.obj" \
-"./main.obj" \
-"./System.obj" \
 "./PlaySong.obj" \
--l"libc.a" \
+"./System.obj" \
+"./main.obj" \
+"./I2C/I2CMaster.obj" \
+"./CapTouch/CTS_HAL.obj" \
+"./CapTouch/CTS_Layer.obj" \
+"./CapTouch/CapTouchLib.obj" \
+"./CapTouch/structure.obj" \
+"./BinaryCodeModulation/BCM.obj" \
+"./BinaryCodeModulation/bytePivot.obj" \
 "../lnk_msp430g2553.cmd" \
+-l"libc.a" \
 
 -include ../makefile.init
 
@@ -122,6 +122,12 @@ endif
 -include ../makefile.defs
 
 # Add inputs and outputs from these tool invocations to the build variables 
+EXE_OUTPUTS += \
+FireFlyJar.out \
+
+EXE_OUTPUTS__QUOTED += \
+"FireFlyJar.out" \
+
 
 # All Target
 all: FireFlyJar.out
@@ -130,13 +136,13 @@ all: FireFlyJar.out
 FireFlyJar.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MSP430 Linker'
-	"C:/ti/ccsv5/tools/compiler/msp430/bin/cl430" -vmsp --abi=coffabi -g --gcc --define=__MSP430G2553__ --diag_warning=225 --display_error_number --printf_support=minimal -z -m"FireFlyJar.map" --stack_size=80 --heap_size=80 -i"C:/ti/ccsv5/ccs_base/msp430/include" -i"C:/ti/ccsv5/tools/compiler/msp430/lib" -i"C:/ti/ccsv5/tools/compiler/msp430/include" --reread_libs --warn_sections --rom_model -o "FireFlyJar.out" $(ORDERED_OBJS)
+	"c:/ti/ccsv6/tools/compiler/msp430_4.3.3/bin/cl430" -vmsp --abi=coffabi -g --gcc --define=__MSP430G2553__ --diag_warning=225 --display_error_number --printf_support=minimal -z -m"FireFlyJar.map" --stack_size=80 --heap_size=80 -i"c:/ti/ccsv6/ccs_base/msp430/include" -i"c:/ti/ccsv6/tools/compiler/msp430_4.3.3/lib" -i"c:/ti/ccsv6/tools/compiler/msp430_4.3.3/include" --reread_libs --warn_sections --xml_link_info="FireFlyJar_linkInfo.xml" --rom_model -o "FireFlyJar.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(MSP430_EXECUTABLE_OUTPUTS__QUOTED) "FireFlyJar.out"
+	-$(RM) $(EXE_OUTPUTS__QUOTED)
 	-$(RM) "PlaySong.pp" "System.pp" "main.pp" "I2C\I2CMaster.pp" "CapTouch\CTS_HAL.pp" "CapTouch\CTS_Layer.pp" "CapTouch\CapTouchLib.pp" "CapTouch\structure.pp" "BinaryCodeModulation\BCM.pp" 
 	-$(RM) "PlaySong.obj" "System.obj" "main.obj" "I2C\I2CMaster.obj" "CapTouch\CTS_HAL.obj" "CapTouch\CTS_Layer.obj" "CapTouch\CapTouchLib.obj" "CapTouch\structure.obj" "BinaryCodeModulation\BCM.obj" "BinaryCodeModulation\bytePivot.obj" 
 	-$(RM) "BinaryCodeModulation\bytePivot.pp" 
@@ -147,3 +153,4 @@ clean:
 .SECONDARY:
 
 -include ../makefile.targets
+
